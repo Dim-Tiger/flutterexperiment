@@ -425,6 +425,7 @@ class _HomePageState extends State<HomePage> {
                       TextSpan(text: ' ${activity['action']}'),
                     ],
                   ),
+                  overflow: TextOverflow.ellipsis,
                 ),
                 Text(
                   activity['time'] as String,

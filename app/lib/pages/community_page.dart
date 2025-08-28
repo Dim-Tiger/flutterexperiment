@@ -164,11 +164,14 @@ class _CommunityPageState extends State<CommunityPage> {
                   children: [
                     Row(
                       children: [
-                        Text(
-                          post['userName'] as String,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
+                        Expanded(
+                          child: Text(
+                            post['userName'] as String,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
                         const SizedBox(width: 8),

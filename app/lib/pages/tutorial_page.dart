@@ -130,24 +130,27 @@ class _TutorialPageState extends State<TutorialPage> {
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: Row(
-                  children: ['All', 'Beginner', 'Intermediate', 'Advanced']
-                      .map((level) => Padding(
-                            padding: const EdgeInsets.only(right: 8),
-                            child: FilterChip(
-                              label: Text(level),
-                              selected: _selectedDifficulty == level,
-                              onSelected: (selected) {
-                                setState(() {
-                                  _selectedDifficulty = level;
-                                });
-                              },
-                              backgroundColor: Colors.white,
-                              selectedColor: Colors.green.withOpacity(0.2),
-                              checkmarkColor: Colors.green,
-                            ),
-                          ))
-                      .toList(),
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: ['All', 'Beginner', 'Intermediate', 'Advanced']
+                        .map((level) => Padding(
+                              padding: const EdgeInsets.only(right: 8),
+                              child: FilterChip(
+                                label: Text(level),
+                                selected: _selectedDifficulty == level,
+                                onSelected: (selected) {
+                                  setState(() {
+                                    _selectedDifficulty = level;
+                                  });
+                                },
+                                backgroundColor: Colors.white,
+                                selectedColor: Colors.green.withOpacity(0.2),
+                                checkmarkColor: Colors.green,
+                              ),
+                            ))
+                        .toList(),
+                  ),
                 ),
               ),
             ],
@@ -387,12 +390,15 @@ class _TutorialPageState extends State<TutorialPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    children: [
-                      _buildLevelBadge(tutorial['level'] as String),
-                      const SizedBox(width: 8),
-                      _buildInstrumentBadge(tutorial['instrument'] as String),
-                    ],
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: [
+                        _buildLevelBadge(tutorial['level'] as String),
+                        const SizedBox(width: 8),
+                        _buildInstrumentBadge(tutorial['instrument'] as String),
+                      ],
+                    ),
                   ),
                   const SizedBox(height: 6),
                   Text(
@@ -424,11 +430,14 @@ class _TutorialPageState extends State<TutorialPage> {
                       const SizedBox(width: 12),
                       Icon(Icons.people, color: Colors.grey[600], size: 16),
                       const SizedBox(width: 4),
-                      Text(
-                        '${tutorial['students']}',
-                        style: TextStyle(
-                          color: Colors.grey[600],
-                          fontSize: 14,
+                      Expanded(
+                        child: Text(
+                          '${tutorial['students']}',
+                          style: TextStyle(
+                            color: Colors.grey[600],
+                            fontSize: 14,
+                          ),
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                     ],
@@ -707,6 +716,7 @@ class _TutorialPageState extends State<TutorialPage> {
                   color: Colors.grey,
                   fontSize: 12,
                 ),
+                overflow: TextOverflow.ellipsis,
               ),
               const SizedBox(height: 12),
               SizedBox(
