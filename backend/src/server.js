@@ -18,7 +18,7 @@ const tutorialRoutes = require('./routes/tutorials');
 const marketplaceRoutes = require('./routes/marketplace');
 
 // Import middleware
-const errorHandler = require('./middleware/errorHandler');
+const { errorHandler } = require('./middleware/errorHandler');
 const authMiddleware = require('./middleware/auth');
 
 // Import database connection
