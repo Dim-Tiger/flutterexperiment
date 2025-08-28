@@ -461,17 +461,20 @@ class _PracticeHubPageState extends State<PracticeHubPage> {
           const SizedBox(height: 8),
           Row(
             children: [
-              Text(
-                'Hosted by ${session['host']}',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Colors.grey[600],
+              Expanded(
+                child: Text(
+                  'Hosted by ${session['host']}',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Colors.grey[600],
+                  ),
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
               const SizedBox(width: 16),
               Icon(Icons.people, size: 16, color: Colors.grey[600]),
               const SizedBox(width: 4),
               Text(
-                '${session['participants']} participants',
+                '${session['participants']}',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: Colors.grey[600],
                 ),
@@ -550,9 +553,12 @@ class _PracticeHubPageState extends State<PracticeHubPage> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(
-              title,
-              style: const TextStyle(fontWeight: FontWeight.w500),
+            Expanded(
+              child: Text(
+                title,
+                style: const TextStyle(fontWeight: FontWeight.w500),
+                overflow: TextOverflow.ellipsis,
+              ),
             ),
             Text(
               '$current/$target',
