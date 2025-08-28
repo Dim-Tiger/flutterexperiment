@@ -269,12 +269,15 @@ class _HomePageState extends State<HomePage> {
             ),
           ),
           const SizedBox(height: 4),
-          Row(
-            children: [
-              _buildTag(competition['genre'] as String, Colors.blue.shade100, Colors.blue),
-              const SizedBox(width: 8),
-              _buildTag(competition['level'] as String, Colors.green.shade100, Colors.green),
-            ],
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                _buildTag(competition['genre'] as String, Colors.blue.shade100, Colors.blue),
+                const SizedBox(width: 8),
+                _buildTag(competition['level'] as String, Colors.green.shade100, Colors.green),
+              ],
+            ),
           ),
           const SizedBox(height: 8),
           Text(
