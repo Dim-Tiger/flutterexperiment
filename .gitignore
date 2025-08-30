@@ -26,4 +26,4 @@ backend/.pytest_cache/
 Thumbs.db
 
 # Logs
-*.log
+*.log*.tar.xz

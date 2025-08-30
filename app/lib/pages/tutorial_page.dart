@@ -390,15 +390,16 @@ class _TutorialPageState extends State<TutorialPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: Row(
-                      children: [
-                        _buildLevelBadge(tutorial['level'] as String),
-                        const SizedBox(width: 8),
-                        _buildInstrumentBadge(tutorial['instrument'] as String),
-                      ],
-                    ),
+                  Row(
+                    children: [
+                      Flexible(
+                        child: _buildLevelBadge(tutorial['level'] as String),
+                      ),
+                      const SizedBox(width: 8),
+                      Flexible(
+                        child: _buildInstrumentBadge(tutorial['instrument'] as String),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 6),
                   Text(
@@ -678,10 +679,14 @@ class _TutorialPageState extends State<TutorialPage> {
                             fontWeight: FontWeight.bold,
                             fontSize: 16,
                           ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                         Text(
                           'Master all major scales in 30 days',
                           style: TextStyle(color: Colors.grey),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ],
                     ),
@@ -769,6 +774,7 @@ class _TutorialPageState extends State<TutorialPage> {
           fontSize: 10,
           fontWeight: FontWeight.bold,
         ),
+        overflow: TextOverflow.ellipsis,
       ),
     );
   }
@@ -787,6 +793,7 @@ class _TutorialPageState extends State<TutorialPage> {
           fontSize: 10,
           fontWeight: FontWeight.bold,
         ),
+        overflow: TextOverflow.ellipsis,
       ),
     );
   }

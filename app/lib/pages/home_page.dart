@@ -267,17 +267,20 @@ class _HomePageState extends State<HomePage> {
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.bold,
             ),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
           ),
           const SizedBox(height: 4),
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: [
-                _buildTag(competition['genre'] as String, Colors.blue.shade100, Colors.blue),
-                const SizedBox(width: 8),
-                _buildTag(competition['level'] as String, Colors.green.shade100, Colors.green),
-              ],
-            ),
+          Row(
+            children: [
+              Flexible(
+                child: _buildTag(competition['genre'] as String, Colors.blue.shade100, Colors.blue),
+              ),
+              const SizedBox(width: 8),
+              Flexible(
+                child: _buildTag(competition['level'] as String, Colors.green.shade100, Colors.green),
+              ),
+            ],
           ),
           const SizedBox(height: 8),
           Text(
@@ -324,6 +327,7 @@ class _HomePageState extends State<HomePage> {
           fontSize: 11,
           fontWeight: FontWeight.w500,
         ),
+        overflow: TextOverflow.ellipsis,
       ),
     );
   }
