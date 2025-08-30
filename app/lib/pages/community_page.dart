@@ -205,6 +205,8 @@ class _CommunityPageState extends State<CommunityPage> {
               fontSize: 18,
               fontWeight: FontWeight.bold,
             ),
+            maxLines: 3,
+            overflow: TextOverflow.ellipsis,
           ),
           const SizedBox(height: 8),
           Text(
@@ -213,6 +215,8 @@ class _CommunityPageState extends State<CommunityPage> {
               color: Colors.grey[700],
               height: 1.4,
             ),
+            maxLines: 4,
+            overflow: TextOverflow.ellipsis,
           ),
           
           // Media if exists

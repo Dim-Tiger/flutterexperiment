@@ -430,6 +430,8 @@ class _PracticeHubPageState extends State<PracticeHubPage> {
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
               if (session['isLive'] as bool) ...[
