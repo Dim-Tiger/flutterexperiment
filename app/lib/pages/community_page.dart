@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../models/music_models.dart';
+import '../services/app_state.dart';
 
 class CommunityPage extends StatefulWidget {
   const CommunityPage({super.key});
@@ -9,26 +12,36 @@ class CommunityPage extends StatefulWidget {
 
 class _CommunityPageState extends State<CommunityPage> {
   String _selectedCategory = 'All';
-  final TextEditingController _postController = TextEditingController();
+  final TextEditingController _searchController = TextEditingController();
+  
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[50],
       body: SafeArea(
-        child: Column(
-          children: [
-            // Header
-            _buildHeader(context),
-            
-            // Category Filter
-            _buildCategoryFilter(context),
-            
-            // Posts Feed
-            Expanded(
-              child: _buildPostsFeed(context),
-            ),
-          ],
+        child: Consumer<AppState>(
+          builder: (context, appState, child) {
+            return Column(
+              children: [
+                // Header
+                _buildHeader(context, appState),
+                
+                // Category Filter
+                _buildCategoryFilter(context, appState),
+                
+                // Posts Feed
+                Expanded(
+                  child: _buildPostsFeed(context, appState),
+                ),
+              ],
+            );
+          },
         ),
       ),
       floatingActionButton: FloatingActionButton(
@@ -38,16 +51,564 @@ class _CommunityPageState extends State<CommunityPage> {
     );
   }
 
-  Widget _buildHeader(BuildContext context) {
+  Widget _buildHeader(BuildContext context, AppState appState) {
     return Container(
       padding: const EdgeInsets.all(16.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      child: Column(
         children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Community',
+                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  Text(
+                    'Connect with fellow musicians',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: Colors.grey[600],
+                    ),
+                  ),
+                ],
+              ),
+              Row(
+                children: [
+                  IconButton(
+                    onPressed: () async {
+                      await appState.loadCommunityPosts(refresh: true);
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Posts refreshed')),
+                        );
+                      }
+                    },
+                    icon: const Icon(Icons.refresh),
+                  ),
+                  IconButton(
+                    onPressed: () => _showSearchDialog(context, appState),
+                    icon: const Icon(Icons.search),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          
+          // Online Status
+          if (!appState.isOnline) ...[
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: Colors.orange[100],
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.wifi_off, size: 16, color: Colors.orange[700]),
+                  const SizedBox(width: 4),
+                  Text(
+                    'Offline mode',
+                    style: TextStyle(
+                      color: Colors.orange[700],
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCategoryFilter(BuildContext context, AppState appState) {
+    final categories = ['All', 'Tips', 'Questions', 'Technique', 'Performance', 'Gear'];
+    
+    return Container(
+      height: 50,
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        itemCount: categories.length,
+        itemBuilder: (context, index) {
+          final category = categories[index];
+          final isSelected = _selectedCategory == category;
+          
+          return Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: FilterChip(
+              label: Text(category),
+              selected: isSelected,
+              onSelected: (selected) async {
+                setState(() {
+                  _selectedCategory = category;
+                });
+                // Reload posts with new filter
+                await appState.loadCommunityPosts(refresh: true);
+              },
+              selectedColor: Theme.of(context).primaryColor.withOpacity(0.2),
+              checkmarkColor: Theme.of(context).primaryColor,
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildPostsFeed(BuildContext context, AppState appState) {
+    if (appState.isLoading && appState.communityPosts.isEmpty) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (appState.communityPosts.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.forum_outlined,
+              size: 64,
+              color: Colors.grey[400],
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'No posts yet',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                color: Colors.grey[600],
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Be the first to share with the community!',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: Colors.grey[500],
+              ),
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: () => _showCreatePostDialog(context),
+              child: const Text('Create Post'),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // Filter posts by category if not "All"
+    final filteredPosts = _selectedCategory == 'All'
+        ? appState.communityPosts
+        : appState.communityPosts
+            .where((post) => post.category == _selectedCategory)
+            .toList();
+
+    return RefreshIndicator(
+      onRefresh: () => appState.loadCommunityPosts(refresh: true),
+      child: ListView.builder(
+        padding: const EdgeInsets.all(16),
+        itemCount: filteredPosts.length,
+        itemBuilder: (context, index) {
+          final post = filteredPosts[index];
+          return _buildPostCard(context, post, appState);
+        },
+      ),
+    );
+  }
+
+  Widget _buildPostCard(BuildContext context, CommunityPost post, AppState appState) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 16),
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: Colors.grey[200]!),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Post Header
+            Row(
+              children: [
+                CircleAvatar(
+                  backgroundColor: Theme.of(context).primaryColor,
+                  child: Text(
+                    post.userAvatar,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        post.userName,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      Text(
+                        _formatTimeAgo(post.createdAt),
+                        style: TextStyle(
+                          color: Colors.grey[600],
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: _getCategoryColor(post.category).withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    post.category,
+                    style: TextStyle(
+                      color: _getCategoryColor(post.category),
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            
+            const SizedBox(height: 12),
+            
+            // Post Title
+            Text(
+              post.title,
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            
+            const SizedBox(height: 8),
+            
+            // Post Content
+            Text(
+              post.content,
+              style: Theme.of(context).textTheme.bodyMedium,
+              maxLines: 3,
+              overflow: TextOverflow.ellipsis,
+            ),
+            
+            // Images
+            if (post.imageUrls.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              Container(
+                height: 200,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(8),
+                  color: Colors.grey[200],
+                ),
+                child: const Center(
+                  child: Icon(Icons.image, size: 48, color: Colors.grey),
+                ),
+              ),
+            ],
+            
+            const SizedBox(height: 12),
+            
+            // Tags
+            if (post.tags.isNotEmpty) ...[
+              Wrap(
+                spacing: 6,
+                runSpacing: 6,
+                children: post.tags.map((tag) {
+                  return Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.grey[100],
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      '#$tag',
+                      style: TextStyle(
+                        color: Colors.grey[700],
+                        fontSize: 11,
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+              const SizedBox(height: 12),
+            ],
+            
+            // Actions
+            Row(
+              children: [
+                IconButton(
+                  onPressed: () => appState.toggleLikePost(post.id),
+                  icon: const Icon(Icons.favorite_outline),
+                  iconSize: 20,
+                ),
+                Text(
+                  '${post.likeCount}',
+                  style: TextStyle(color: Colors.grey[600]),
+                ),
+                const SizedBox(width: 16),
+                IconButton(
+                  onPressed: () {
+                    // TODO: Navigate to post details with comments
+                  },
+                  icon: const Icon(Icons.comment_outlined),
+                  iconSize: 20,
+                ),
+                Text(
+                  '${post.commentCount}',
+                  style: TextStyle(color: Colors.grey[600]),
+                ),
+                const Spacer(),
+                IconButton(
+                  onPressed: () {
+                    // TODO: Share post
+                  },
+                  icon: const Icon(Icons.share_outlined),
+                  iconSize: 20,
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showCreatePostDialog(BuildContext context) {
+    final titleController = TextEditingController();
+    final contentController = TextEditingController();
+    final tagsController = TextEditingController();
+    String selectedCategory = 'Tips';
+    
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          title: const Text('Create Post'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextFormField(
+                  controller: titleController,
+                  decoration: const InputDecoration(
+                    labelText: 'Title',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                DropdownButtonFormField<String>(
+                  value: selectedCategory,
+                  decoration: const InputDecoration(
+                    labelText: 'Category',
+                    border: OutlineInputBorder(),
+                  ),
+                  items: ['Tips', 'Questions', 'Technique', 'Performance', 'Gear']
+                      .map((category) => DropdownMenuItem(
+                            value: category,
+                            child: Text(category),
+                          ))
+                      .toList(),
+                  onChanged: (value) => setState(() => selectedCategory = value!),
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: contentController,
+                  decoration: const InputDecoration(
+                    labelText: 'Content',
+                    border: OutlineInputBorder(),
+                  ),
+                  maxLines: 4,
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: tagsController,
+                  decoration: const InputDecoration(
+                    labelText: 'Tags (comma separated)',
+                    border: OutlineInputBorder(),
+                    hintText: 'piano, practice, technique',
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            Consumer<AppState>(
+              builder: (context, appState, child) => ElevatedButton(
+                onPressed: appState.isLoading
+                    ? null
+                    : () async {
+                        if (titleController.text.isNotEmpty && 
+                            contentController.text.isNotEmpty) {
+                          final tags = tagsController.text.isNotEmpty
+                              ? tagsController.text.split(',').map((t) => t.trim()).toList()
+                              : <String>[];
+                          
+                          final success = await appState.createCommunityPost(
+                            title: titleController.text,
+                            content: contentController.text,
+                            category: selectedCategory,
+                            tags: tags,
+                          );
+                          
+                          if (success && context.mounted) {
+                            Navigator.pop(context);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Post created successfully!')),
+                            );
+                          }
+                        }
+                      },
+                child: appState.isLoading
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Text('Post'),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showSearchDialog(BuildContext context, AppState appState) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Search Posts'),
+        content: TextField(
+          controller: _searchController,
+          decoration: const InputDecoration(
+            hintText: 'Enter search terms...',
+            border: OutlineInputBorder(),
+          ),
+          onSubmitted: (query) async {
+            if (query.isNotEmpty) {
+              Navigator.pop(context);
+              final results = await appState.searchContent(query);
+              if (context.mounted) {
+                _showSearchResults(context, results['posts'] as List<CommunityPost>? ?? []);
+              }
+            }
+          },
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              final query = _searchController.text;
+              if (query.isNotEmpty) {
+                Navigator.pop(context);
+                final results = await appState.searchContent(query);
+                if (context.mounted) {
+                  _showSearchResults(context, results['posts'] as List<CommunityPost>? ?? []);
+                }
+              }
+            },
+            child: const Text('Search'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showSearchResults(BuildContext context, List<CommunityPost> results) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Search Results (${results.length})'),
+        content: SizedBox(
+          width: double.maxFinite,
+          height: 400,
+          child: results.isEmpty
+              ? const Center(child: Text('No posts found'))
+              : ListView.builder(
+                  itemCount: results.length,
+                  itemBuilder: (context, index) {
+                    final post = results[index];
+                    return ListTile(
+                      title: Text(post.title),
+                      subtitle: Text(
+                        post.content,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      trailing: Text(post.category),
+                      onTap: () {
+                        Navigator.pop(context);
+                        // TODO: Navigate to post details
+                      },
+                    );
+                  },
+                ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Close'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _formatTimeAgo(DateTime dateTime) {
+    final now = DateTime.now();
+    final difference = now.difference(dateTime);
+
+    if (difference.inDays > 0) {
+      return '${difference.inDays}d ago';
+    } else if (difference.inHours > 0) {
+      return '${difference.inHours}h ago';
+    } else if (difference.inMinutes > 0) {
+      return '${difference.inMinutes}m ago';
+    } else {
+      return 'Just now';
+    }
+  }
+
+  Color _getCategoryColor(String category) {
+    switch (category.toLowerCase()) {
+      case 'tips':
+        return Colors.green;
+      case 'questions':
+        return Colors.blue;
+      case 'technique':
+        return Colors.orange;
+      case 'performance':
+        return Colors.purple;
+      case 'gear':
+        return Colors.red;
+      default:
+        return Colors.grey;
+    }
+  }
+}
                 'Community',
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                   fontWeight: FontWeight.bold,

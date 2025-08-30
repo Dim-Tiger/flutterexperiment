@@ -58,6 +58,29 @@ class User {
       'isVerified': isVerified,
     };
   }
+
+  User copyWith({
+    String? name,
+    String? email,
+    String? avatarUrl,
+    String? bio,
+    List<String>? instruments,
+    String? skillLevel,
+    DateTime? joinDate,
+    bool? isVerified,
+  }) {
+    return User(
+      id: id,
+      name: name ?? this.name,
+      email: email ?? this.email,
+      avatarUrl: avatarUrl ?? this.avatarUrl,
+      bio: bio ?? this.bio,
+      instruments: instruments ?? this.instruments,
+      skillLevel: skillLevel ?? this.skillLevel,
+      joinDate: joinDate ?? this.joinDate,
+      isVerified: isVerified ?? this.isVerified,
+    );
+  }
 }
 
 /// Competition model for music competitions
