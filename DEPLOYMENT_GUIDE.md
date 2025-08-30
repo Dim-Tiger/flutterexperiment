@@ -50,34 +50,38 @@ Copy the example environment file:
 cp .env.example .env
 ```
 
-Configure your `.env` file with the following required variables:
+Configure your `.env` file with production-appropriate values. 
+
+**📖 For complete environment variable documentation, see the [Backend README Environment Variables section](backend/README.md#-environment-variables).**
+
+**Quick production configuration checklist:**
 
 ```env
 # Environment
-NODE_ENV=production  # or development
+NODE_ENV=production
 PORT=3000
 
-# Database Configuration
-DATABASE_URL=postgresql://username:password@localhost:5432/music_practice_db
-REDIS_URL=redis://localhost:6379
+# Database Configuration (with SSL for production)
+DATABASE_URL=postgresql://username:password@your-db-host:5432/music_practice_db?sslmode=require
+REDIS_URL=redis://username:password@your-redis-host:6379
 
-# JWT Configuration (IMPORTANT: Use strong secrets in production)
-JWT_SECRET=your-super-secure-jwt-secret-minimum-32-characters
+# JWT Configuration (CRITICAL: Use strong, unique secrets)
+JWT_SECRET=your-super-secure-jwt-secret-minimum-64-characters-long
 JWT_EXPIRES_IN=7d
-JWT_REFRESH_SECRET=your-super-secure-refresh-secret-minimum-32-characters
+JWT_REFRESH_SECRET=your-different-super-secure-refresh-secret-64-chars
 JWT_REFRESH_EXPIRES_IN=30d
 
 # Cloudinary Configuration (for media storage)
-CLOUDINARY_CLOUD_NAME=your-cloudinary-cloud-name
-CLOUDINARY_API_KEY=your-cloudinary-api-key
-CLOUDINARY_API_SECRET=your-cloudinary-api-secret
+CLOUDINARY_CLOUD_NAME=your-production-cloudinary-cloud-name
+CLOUDINARY_API_KEY=your-production-cloudinary-api-key
+CLOUDINARY_API_SECRET=your-production-cloudinary-api-secret
 
-# CORS Configuration (Update with your frontend URL)
-ALLOWED_ORIGINS=https://your-frontend-domain.com,http://localhost:3000
+# CORS Configuration (Update with your actual frontend domain)
+ALLOWED_ORIGINS=https://your-frontend-domain.com,https://www.your-frontend-domain.com
 
-# Rate Limiting
+# Production Performance Settings
 RATE_LIMIT_WINDOW_MS=900000  # 15 minutes
-RATE_LIMIT_MAX_REQUESTS=100
+RATE_LIMIT_MAX_REQUESTS=1000 # Higher limit for production
 
 # File Upload Limits
 MAX_FILE_SIZE=10485760      # 10MB
@@ -87,6 +91,13 @@ MAX_FILES_PER_REQUEST=5
 STRIPE_SECRET_KEY=sk_live_your_stripe_secret_key
 STRIPE_WEBHOOK_SECRET=whsec_your_webhook_secret
 ```
+
+**🔒 Production Security Notes:**
+- Generate secrets with: `openssl rand -base64 32`
+- Use different secrets for each environment
+- Enable SSL/TLS for database connections
+- Restrict CORS origins to your actual domains
+- Use environment variables, never hardcode secrets
 
 #### 3. Database Setup
 
